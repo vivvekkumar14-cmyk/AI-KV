@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KV Founder Biometric Login</title>
+<link rel="stylesheet" href="assets/css/luxury.css">
+</head>
+<body>
+
+<div id="kv-bg"></div>
+<div id="kv-blur"></div>
+
+<div class="container">
+<div class="card">
+<h1 class="gradient-text">Founder Biometric Login</h1>
+<p>Authenticate using your registered biometric credential.</p>
+
+<script>
+async function loginBiometric() {
+    try {
+        const resp = await fetch('login_founder.php');
+        const options = await resp.json();
+
+        options.challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0));
+        options.allowCredentials.forEach(c => c.id = Uint8Array.from(atob(c.id), c => c.charCodeAt(0)));
+
+        const assertion = await navigator.credentials.get({ publicKey: options });
+
+        // Send to server for verification
+        const result = await fetch('verify_founder_login.php', {
+            method:'POST',
+            body: JSON.stringify({
+                id: assertion.id,
+                rawId: Array.from(new Uint8Array(assertion.rawId)),
+                response: {
+                    authenticatorData: Array.from(new Uint8Array(assertion.response.authenticatorData)),
+                    clientDataJSON: Array.from(new Uint8Array(assertion.response.clientDataJSON)),
+                    signature: Array.from(new Uint8Array(assertion.response.signature)),
+                    userHandle: assertion.response.userHandle ? Array.from(new Uint8Array(assertion.response.userHandle)) : null
+                },
+                type: assertion.type
+            }),
+            headers:{'Content-Type':'application/json'}
+        });
+        
+        const res = await result.json();
+        if(res.status=='ok') {
+            alert('Authentication successful!');
+            window.location.href='founder.php';
+        }
+        else alert('Authentication failed: ' + (res.error || 'Unknown error'));
+    } catch (error) {
+        console.error('Biometric login error:', error);
+        alert('Biometric login failed: ' + error.message);
+    }
+}
+</script>
+
+<button onclick="loginBiometric()" class="btn-kvm">Login with Biometric</button>
+</div>
+</div>
+
+<script src="assets/js/luxury.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KV Founder Biometric Enrollment</title>
+<link rel="stylesheet" href="assets/css/luxury.css">
+</head>
+<body>
+
+<div id="kv-bg"></div>
+<div id="kv-blur"></div>
+
+<div class="container">
+<div class="card">
+<h1 class="gradient-text">Founder Biometric Enrollment</h1>
+<p>Register your biometric authentication for secure KV Mansion access.</p>
+
+<script>
+async function registerBiometric() {
+    try {
+        const resp = await fetch('register_founder.php');
+        const options = await resp.json();
+
+        options.challenge = Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0));
+        options.user.id = Uint8Array.from(atob(options.user.id), c => c.charCodeAt(0));
+
+        const credential = await navigator.credentials.create({ publicKey: options });
+
+        // Send credential back to server for verification & storage
+        const data = {
+            id: credential.id,
+            rawId: Array.from(new Uint8Array(credential.rawId)),
+            response: {
+                attestationObject: Array.from(new Uint8Array(credential.response.attestationObject)),
+                clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON))
+            },
+            type: credential.type
+        };
+
+        const verifyResp = await fetch('verify_registration.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await verifyResp.json();
+        
+        if (result.success) {
+            alert('Founder biometric registered successfully!');
+            window.location.href = 'founder.php';
+        } else {
+            alert('Registration failed. Please try again.');
+        }
+    } catch (error) {
+        console.error('Biometric registration error:', error);
+        alert('Biometric registration failed: ' + error.message);
+    }
+}
+</script>
+
+<button onclick="registerBiometric()" class="btn-kvm">Register Biometric Login</button>
+</div>
+</div>
+
+<script src="assets/js/luxury.js"></script>
+</body>
+</html>

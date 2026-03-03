@@ -1,0 +1,6 @@
+{
+    "require": {
+        "web-auth/webauthn-lib": "^5.2",
+        "cboden/ratchet": "^0.4.4"
+    }
+}
